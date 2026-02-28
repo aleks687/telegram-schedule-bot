@@ -1,6 +1,6 @@
 module telegram-schedule-bot
 
-go 1.25.0
+go 1.21
 
 require (
 	github.com/chromedp/chromedp v0.14.2
