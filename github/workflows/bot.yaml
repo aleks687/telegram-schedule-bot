@@ -3,7 +3,7 @@ name: Telegram Bot 24/7
 on:
   schedule:
     - cron: '*/5 * * * *'  # Каждые 5 минут
-  workflow_dispatch:
+  workflow_dispatch:  # Ручной запуск
 
 jobs:
   run-bot:
@@ -23,23 +23,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y chromium-browser chromium-chromedriver
         
-    - name: Make keepalive executable
-      run: chmod +x keepalive.sh
+    - name: Create data directory
+      run: mkdir -p data
       
-    - name: Run Bot Forever
+    - name: Run Bot
       env:
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        SCHEDULE_URL: ${{ secrets.SCHEDULE_URL }}
-        DB_PATH: ./data/schedule.db
+        SCHEDULE_URL: https://edu.tgpi.ru
       run: |
-        # Создаем папку для БД
-        mkdir -p data
+        echo "🚀 Запуск бота..."
+        go run main.go &
+        BOT_PID=$!
+        echo "✅ Бот запущен с PID: $BOT_PID"
         
-        # Запускаем keepalive скрипт
-        ./keepalive.sh &
+        # Держим бота живым 5 минут
+        sleep 280
         
-        # Держим job живым
-        while true; do
-          sleep 60
-          echo "Бот все еще работает... $(date)"
-        done
+        # Убиваем перед следующим запуском
+        kill $BOT_PID 2>/dev/null || true
+        echo "✅ Бот остановлен, ждем следующего запуска..."
