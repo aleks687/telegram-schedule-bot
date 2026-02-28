@@ -1,0 +1,45 @@
+name: Telegram Bot 24/7
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Каждые 5 минут
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Install Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y chromium-browser chromium-chromedriver
+        
+    - name: Make keepalive executable
+      run: chmod +x keepalive.sh
+      
+    - name: Run Bot Forever
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        SCHEDULE_URL: ${{ secrets.SCHEDULE_URL }}
+        DB_PATH: ./data/schedule.db
+      run: |
+        # Создаем папку для БД
+        mkdir -p data
+        
+        # Запускаем keepalive скрипт
+        ./keepalive.sh &
+        
+        # Держим job живым
+        while true; do
+          sleep 60
+          echo "Бот все еще работает... $(date)"
+        done
